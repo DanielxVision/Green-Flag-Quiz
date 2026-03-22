@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Are You A Green Flag?</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2d6a4f;
+    --green-light: #52b788;
+    --green-glow: #74c69d;
+    --cream: #fefae0;
+    --warm: #f8edeb;
+    --dark: #1a1a2e;
+    --accent: #b7e4c7;
+    --text: #081c15;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--dark);
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== BACKGROUND ===== */
+  .bg-pattern {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(45,106,79,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(82,183,136,0.2) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 50%, rgba(116,198,157,0.05) 0%, transparent 80%);
+    background-color: #0d1f18;
+  }
+  .bg-dots {
+    position: fixed; inset: 0; z-index: 0; opacity: 0.08;
+    background-image: radial-gradient(circle, #74c69d 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s ease;
+  }
+  .screen.active { opacity: 1; pointer-events: all; }
+
+  /* ===== LOADING SCREEN ===== */
+  #loading-screen .content {
+    text-align: center;
+    padding: 40px;
+  }
+  .logo-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 8vw, 6rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #74c69d 0%, #52b788 40%, #2d6a4f 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    margin-bottom: 12px;
+    animation: titlePulse 2s ease-in-out infinite;
+  }
+  @keyframes titlePulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.2); }
+  }
+  .flag-emoji {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 16px;
+    animation: wave 1.5s ease-in-out infinite;
+    transform-origin: 70% 70%;
+  }
+  @keyframes wave {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(10deg); }
+    75% { transform: rotate(-5deg); }
+  }
+
+  .loader-wrap {
+    margin-top: 40px;
+    width: min(400px, 80vw);
+  }
+  .loader-track {
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 99px;
+    overflow: hidden;
+    border: 1px solid rgba(116,198,157,0.2);
+  }
+  .loader-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #2d6a4f, #52b788, #74c69d);
+    border-radius: 99px;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 12px rgba(116,198,157,0.6);
+  }
+  .loader-pct {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--green-glow);
+    margin-top: 10px;
+    letter-spacing: 2px;
+  }
+  .loading-tip {
+    margin-top: 16px;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.3);
+    font-style: italic;
+    min-height: 20px;
+    transition: opacity 0.4s;
+  }
+
+  /* ===== WELCOME SCREEN ===== */
+  #welcome-screen .content {
+    text-align: center;
+    padding: 40px 24px;
+    max-width: 680px;
+    width: 100%;
+    animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .welcome-flag { font-size: 3.5rem; margin-bottom: 8px; display: block; }
+  .welcome-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 6vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    background: linear-gradient(135deg, #74c69d 0%, #52b788 50%, #b7e4c7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(116,198,157,0.15);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin: 20px 0;
+    backdrop-filter: blur(10px);
+  }
+  .subtitle-main {
+    font-size: 1.15rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+  .subtitle-main em {
+    font-style: normal;
+    color: var(--green-glow);
+    font-weight: 500;
+  }
+  .subtitle-info {
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.6;
+  }
+  .info-chips {
+    display: flex; gap: 12px; justify-content: center;
+    flex-wrap: wrap; margin-top: 16px;
+  }
+  .chip {
+    background: rgba(116,198,157,0.1);
+    border: 1px solid rgba(116,198,157,0.25);
+    border-radius: 99px;
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    color: var(--green-glow);
+    letter-spacing: 0.5px;
+  }
+
+  .btn-start {
+    margin-top: 28px;
+    display: inline-block;
+    padding: 16px 52px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--dark);
+    background: linear-gradient(135deg, #74c69d, #52b788);
+    border: none;
+    border-radius: 99px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(82,183,136,0.35);
+    letter-spacing: 0.5px;
+  }
+  .btn-start::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #b7e4c7, #74c69d);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(82,183,136,0.5); }
+  .btn-start:hover::before { opacity: 1; }
+  .btn-start span { position: relative; z-index: 1; }
+
+  /* ===== CONFETTI ===== */
+  #confetti-canvas {
+    position: fixed; inset: 0; z-index: 100;
+    pointer-events: none;
+  }
+
+  /* ===== QUIZ SCREEN ===== */
+  #quiz-screen {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 24px 16px 40px;
+  }
+  #quiz-screen .content {
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .quiz-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--green-glow);
+    opacity: 0.7;
+  }
+  .progress-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .q-counter {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1px;
+  }
+  .score-badge {
+    background: rgba(116,198,157,0.1);
+    border: 1px solid rgba(116,198,157,0.2);
+    border-radius: 99px;
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    color: var(--green-glow);
+  }
+
+  .progress-bar-wrap {
+    width: 100%; height: 5px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2d6a4f, #74c69d);
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 8px rgba(116,198,157,0.5);
+  }
+
+  .question-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(116,198,157,0.12);
+    border-radius: 24px;
+    padding: 32px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+    animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes cardIn {
+    from { transform: translateX(30px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .q-category {
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green-glow);
+    opacity: 0.7;
+    margin-bottom: 12px;
+  }
+  .q-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    font-weight: 700;
+    line-height: 1.4;
+    color: rgba(255,255,255,0.95);
+  }
+
+  .options-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 500px) { .options-grid { grid-template-columns: 1fr; } }
+
+  .option-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1.5px solid rgba(116,198,157,0.12);
+    border-radius: 14px;
+    padding: 14px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.8);
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.4;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .option-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(116,198,157,0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: rgba(116,198,157,0.4);
+    transform: translateY(-1px);
+    color: #fff;
+  }
+  .option-btn:hover:not(:disabled)::before { opacity: 1; }
+  .option-btn.correct {
+    border-color: #52b788;
+    background: rgba(82,183,136,0.15);
+    color: #b7e4c7;
+  }
+  .option-btn.wrong {
+    border-color: rgba(255,100,100,0.5);
+    background: rgba(255,100,100,0.08);
+    color: rgba(255,150,150,0.8);
+  }
+  .option-btn:disabled { cursor: default; }
+  .option-letter {
+    display: inline-block;
+    width: 22px; height: 22px;
+    background: rgba(116,198,157,0.1);
+    border: 1px solid rgba(116,198,157,0.2);
+    border-radius: 50%;
+    font-size: 0.7rem;
+    text-align: center;
+    line-height: 22px;
+    margin-right: 10px;
+    color: var(--green-glow);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .option-inner { display: flex; align-items: flex-start; }
+
+  .feedback-msg {
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    margin-top: 12px;
+    min-height: 44px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    line-height: 1.5;
+  }
+  .feedback-msg.show { opacity: 1; }
+  .feedback-msg.correct-fb { background: rgba(82,183,136,0.12); color: #b7e4c7; border: 1px solid rgba(82,183,136,0.2); }
+  .feedback-msg.wrong-fb { background: rgba(255,100,100,0.08); color: rgba(255,180,180,0.9); border: 1px solid rgba(255,100,100,0.15); }
+
+  .btn-next {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 15px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--dark);
+    background: linear-gradient(135deg, #74c69d, #52b788);
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(82,183,136,0.3);
+  }
+  .btn-next.show { opacity: 1; pointer-events: all; }
+  .btn-next:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(82,183,136,0.45); }
+
+  /* ===== RESULT SCREEN ===== */
+  #result-screen .content {
+    text-align: center;
+    max-width: 640px;
+    padding: 40px 24px;
+    animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .result-emoji { font-size: 5rem; display: block; margin-bottom: 16px; }
+  .result-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, #74c69d, #52b788);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+    line-height: 1.1;
+  }
+  .result-subtitle {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 28px;
+  }
+  .score-ring {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: conic-gradient(#52b788 var(--pct), rgba(255,255,255,0.06) var(--pct));
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    position: relative;
+  }
+  .score-ring::before {
+    content: '';
+    position: absolute;
+    width: 108px; height: 108px;
+    background: #0d1f18;
+    border-radius: 50%;
+  }
+  .score-number {
+    position: relative; z-index: 1;
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--green-glow);
+  }
+  .score-number small {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.4);
+    display: block;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+  }
+  .result-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(116,198,157,0.15);
+    border-radius: 20px;
+    padding: 24px 28px;
+    margin: 0 0 20px;
+  }
+  .result-verdict {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--green-glow);
+    margin-bottom: 8px;
+  }
+  .result-desc {
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.6;
+  }
+  .btn-retry {
+    display: inline-block;
+    padding: 14px 44px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--dark);
+    background: linear-gradient(135deg, #74c69d, #52b788);
+    border: none;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(82,183,136,0.35);
+  }
+  .btn-retry:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(82,183,136,0.5); }
+</style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+<div class="bg-dots"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<!-- LOADING SCREEN -->
+<div class="screen active" id="loading-screen">
+  <div class="content">
+    <span class="flag-emoji">🟢</span>
+    <div class="logo-title">Are You A<br>Green Flag?</div>
+    <div class="loader-wrap">
+      <div class="loader-track">
+        <div class="loader-fill" id="loader-fill"></div>
+      </div>
+      <div class="loader-pct" id="loader-pct">0%</div>
+      <div class="loading-tip" id="loading-tip">Loading your vibe check...</div>
+    </div>
+  </div>
+</div>
+
+<!-- WELCOME SCREEN -->
+<div class="screen" id="welcome-screen">
+  <div class="content">
+    <span class="welcome-flag">🟢</span>
+    <div class="welcome-title">Are You A<br>Green Flag?</div>
+    <div class="card">
+      <p class="subtitle-main">Take this quiz to see if you're a <em>green flag</em> — the kind of person everyone wants in their life 💚</p>
+    </div>
+    <div class="card">
+      <p class="subtitle-info">This quiz contains <strong style="color:var(--green-glow)">20 questions</strong>. Answer them honestly — we'll reveal just how green your flag truly is. No pressure, just vibes ✨</p>
+      <div class="info-chips">
+        <span class="chip">🕐 ~3 minutes</span>
+        <span class="chip">📋 20 questions</span>
+        <span class="chip">💯 No wrong answers</span>
+      </div>
+    </div>
+    <button class="btn-start" onclick="startQuiz()"><span>Start Quiz →</span></button>
+  </div>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div class="screen" id="quiz-screen">
+  <div class="content">
+    <div class="quiz-header">
+      <div class="quiz-logo">green flag quiz</div>
+      <div class="progress-info">
+        <span class="q-counter" id="q-counter">Q 1 / 20</span>
+        <span class="score-badge" id="score-badge">Score: 0</span>
+      </div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:5%"></div>
+    </div>
+    <div class="question-card" id="question-card">
+      <div class="q-category" id="q-category">CATEGORY</div>
+      <div class="q-text" id="q-text">Question text here</div>
+    </div>
+    <div class="options-grid" id="options-grid"></div>
+    <div class="feedback-msg" id="feedback-msg"></div>
+    <button class="btn-next" id="btn-next" onclick="nextQuestion()">Next Question →</button>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div class="screen" id="result-screen">
+  <div class="content">
+    <span class="result-emoji" id="result-emoji">🟢</span>
+    <div class="result-title" id="result-title">Total Green Flag!</div>
+    <div class="result-subtitle" id="result-subtitle">Here's what we found about you</div>
+    <div class="score-ring" id="score-ring" style="--pct: 0deg">
+      <div class="score-number" id="score-display">0<small>/ 20</small></div>
+    </div>
+    <div class="result-card">
+      <div class="result-verdict" id="result-verdict">Verdict</div>
+      <div class="result-desc" id="result-desc">Description</div>
+    </div>
+    <button class="btn-retry" onclick="retryQuiz()">Retake Quiz 🔄</button>
+  </div>
+</div>
+
+<script>
+// ========== QUESTIONS ==========
+const questions = [
+  {
+    category: "🤝 Communication",
+    text: "Your friend texts you at midnight saying they're upset. What do you do?",
+    options: ["Respond immediately and check in on them", "Reply in the morning, you need sleep too", "Leave it on read, they'll be fine", "Send a 'lol same' and go back to sleep"],
+    correct: 0,
+    feedback: { correct: "Checking in on a friend in need is peak green flag energy 💚", wrong: "A green flag would at least send a quick 'are you okay?' — even at midnight." }
+  },
+  {
+    category: "💬 Emotional Intelligence",
+    text: "Someone shares exciting news with you about something you secretly wish you had. How do you react?",
+    options: ["Genuinely celebrate them — their win isn't your loss", "Smile and quickly change the subject", "Act excited but internally spiral", "Downplay it so you don't have to feel left behind"],
+    correct: 0,
+    feedback: { correct: "Celebrating others without jealousy? That's a rare and beautiful quality 🌿", wrong: "Working on being genuinely happy for others is a major green flag trait!" }
+  },
+  {
+    category: "🪴 Self Awareness",
+    text: "After an argument, you realize you were wrong. What's your move?",
+    options: ["Apologize clearly and take accountability", "Wait for them to bring it up again", "Pretend it never happened and act normal", "Blame it on being tired or stressed"],
+    correct: 0,
+    feedback: { correct: "Owning your mistakes without excuses = top tier green flag behavior 🏆", wrong: "Green flags own their mistakes quickly and without being prompted." }
+  },
+  {
+    category: "❤️ Relationships",
+    text: "You've been dating someone for 3 months. They say they need space. You:",
+    options: ["Respect it, give them space, and trust the process", "Immediately ask what you did wrong 10 times", "Give space but send hourly 'just checking in' texts", "Start subtly making them feel guilty for asking"],
+    correct: 0,
+    feedback: { correct: "Respecting boundaries without making it about yourself — genuinely rare 💚", wrong: "Giving space gracefully without guilt-tripping is what green flags do." }
+  },
+  {
+    category: "🧠 Mindset",
+    text: "A coworker gets a promotion you wanted. How do you genuinely handle it?",
+    options: ["Congratulate them and reflect on your own growth", "Complain to everyone except the person who promoted them", "Be cordial on the outside, bitter on the inside for months", "Start looking for a new job immediately out of spite"],
+    correct: 0,
+    feedback: { correct: "Processing disappointment maturely while still celebrating others = green flag ✅", wrong: "Green flags feel the disappointment but don't let it turn into resentment." }
+  },
+  {
+    category: "🗣️ Honesty",
+    text: "Your best friend's new haircut looks... not great. They ask your opinion.",
+    options: ["Be kind but honest — 'It's not my fave but it'll grow!'", "Absolutely love it!! So cute!!! (lying through teeth)", "Say nothing and just give an awkward smile", "Avoid the topic entirely forever"],
+    correct: 0,
+    feedback: { correct: "Kind honesty is a superpower — it's what real friends do 💚", wrong: "Green flags are honest even when it's uncomfortable, but always with kindness." }
+  },
+  {
+    category: "⚡ Conflict",
+    text: "During an argument, your partner says something that really hurts you. You:",
+    options: ["Say 'that really hurt me' calmly and explain why", "Go silent for 3 days (the silent treatment)", "Match their energy and say something worse back", "Bring up 6 unrelated things from the past"],
+    correct: 0,
+    feedback: { correct: "Communicating hurt feelings in the moment is incredibly green flag 🌱", wrong: "Expressing hurt calmly without escalating or stonewalling is the green flag way." }
+  },
+  {
+    category: "🧘 Boundaries",
+    text: "A friend keeps borrowing money and not paying back. What do you do?",
+    options: ["Have an honest conversation about it directly with them", "Stop lending money but say nothing and grow resentful", "Keep lending because you hate confrontation", "Vent to everyone else about it but never address it"],
+    correct: 0,
+    feedback: { correct: "Addressing issues directly instead of letting them fester — that's growth 💚", wrong: "Green flags address problems directly rather than letting resentment build." }
+  },
+  {
+    category: "💡 Accountability",
+    text: "You accidentally hurt someone's feelings with a joke. They tell you. You say:",
+    options: ["I'm really sorry, I didn't realize — that wasn't okay", "I was just joking, you're too sensitive", "Sorry you feel that way", "I apologize… but I didn't mean it like that though"],
+    correct: 0,
+    feedback: { correct: "A real apology without conditions or deflection is peak maturity 💚", wrong: "Green flags don't add 'but' after apologies or tell people they're too sensitive." }
+  },
+  {
+    category: "🌈 Empathy",
+    text: "A stranger on the street looks like they're crying. You:",
+    options: ["Make gentle eye contact and ask if they're okay", "Keep walking — it's not your business", "Stare as you walk by", "Awkwardly speed up your pace"],
+    correct: 0,
+    feedback: { correct: "Checking on strangers? Your empathy is off the charts 💚", wrong: "A small act of checking in on someone can change their whole day." }
+  },
+  {
+    category: "🤲 Generosity",
+    text: "You have extra money this month. A close friend is struggling. You:",
+    options: ["Offer to help without making them feel like a burden", "Help, but remind them of it every chance you get", "Do nothing — they didn't ask", "Treat yourself only and feel slightly guilty"],
+    correct: 0,
+    feedback: { correct: "Giving without conditions or keeping score is incredibly green flag 🏅", wrong: "Green flags give freely without using it as leverage later." }
+  },
+  {
+    category: "🌿 Growth",
+    text: "Someone gives you constructive criticism about your work. Your first reaction is:",
+    options: ["Thank them and genuinely reflect on what they said", "Get defensive but pretend to agree", "Dismiss it because they don't know what they're talking about", "Agree in the moment then never change anything"],
+    correct: 0,
+    feedback: { correct: "Actually receiving feedback without ego is a rare green flag quality 🌱", wrong: "Green flags sit with feedback before reacting and actually use it to grow." }
+  },
+  {
+    category: "📱 Presence",
+    text: "You're at dinner with someone you care about. Your phone buzzes repeatedly. You:",
+    options: ["Silence it and stay present — they deserve your attention", "Check it quickly every few minutes 'just in case'", "Keep it face-up on the table the whole time", "Scroll while nodding and half-listening"],
+    correct: 0,
+    feedback: { correct: "Being fully present is one of the most underrated acts of love 💚", wrong: "Green flags put the phone away and make people feel seen and valued." }
+  },
+  {
+    category: "🔒 Trust",
+    text: "A friend tells you a secret. Someone else asks you about it later. You:",
+    options: ["Say 'that's not my story to tell' and leave it at that", "Give just a small hint without saying much", "Tell them but say 'please don't tell anyone'", "Share it since it's not THAT serious of a secret"],
+    correct: 0,
+    feedback: { correct: "Being a vault for people's secrets is a rare and treasured quality 🗝️💚", wrong: "Green flags keep secrets — full stop, no exceptions, no half-truths." }
+  },
+  {
+    category: "🌊 Patience",
+    text: "You're waiting for an important reply. It's been 2 days. You:",
+    options: ["Follow up once politely and let them respond in their own time", "Send 4 follow-ups in increasing levels of desperation", "Assume the worst and spiral into anxiety", "Leave passive aggressive one-word replies to their other texts"],
+    correct: 0,
+    feedback: { correct: "Following up once and trusting the process? Mature and calm energy 💚", wrong: "Green flags follow up once and then trust the other person's timeline." }
+  },
+  {
+    category: "🎯 Responsibility",
+    text: "You forget a commitment you made to someone. What do you do?",
+    options: ["Apologize sincerely, explain what happened, and reschedule", "Apologize but make excuses for 5 minutes first", "Hope they forget too and say nothing", "Wait for them to bring it up and then apologize"],
+    correct: 0,
+    feedback: { correct: "Owning your forgetfulness without excuses is the way 💚", wrong: "Green flags reach out first without waiting to be called out." }
+  },
+  {
+    category: "🌸 Kindness",
+    text: "A service worker makes a small mistake with your order. You:",
+    options: ["Politely mention it and thank them for fixing it", "Make a big deal of it and ask for the manager", "Complain loudly to your companion the whole meal", "Leave a passive aggressive review later"],
+    correct: 0,
+    feedback: { correct: "How you treat people with less power than you says everything about you 💚", wrong: "Green flags are kind to everyone — especially people who can't fire them." }
+  },
+  {
+    category: "🧩 Compatibility",
+    text: "You and your partner have opposite opinions on something important. You:",
+    options: ["Discuss it openly and try to understand their view genuinely", "Pretend to agree to avoid conflict", "Refuse to budge and expect them to come around", "Bring it up at the worst possible times as ammunition"],
+    correct: 0,
+    feedback: { correct: "Hearing opposing views without shutting down is emotional maturity 🌿💚", wrong: "Green flags engage with disagreement without needing to 'win' the conversation." }
+  },
+  {
+    category: "✨ Self Love",
+    text: "Someone compliments something you're genuinely proud of. You say:",
+    options: ["Thank you! I worked really hard on that 🙂", "Oh it's nothing, anyone could do it", "Immediately compliment them back to deflect", "Laugh nervously and change the subject immediately"],
+    correct: 0,
+    feedback: { correct: "Receiving a compliment gracefully without deflecting it = healthy self-worth 💚", wrong: "Green flags can receive compliments without immediately minimizing themselves." }
+  },
+  {
+    category: "🏁 Final Question",
+    text: "Be honest — do you think you're a green flag?",
+    options: ["Honestly, I try my best and that's enough 💚", "I have my flaws but I'm always working on them", "I'm a work in progress — still learning", "Probably not but I want to be"],
+    correct: 0,
+    feedback: { correct: "Believing in yourself while staying grounded? That's the greenest flag of all 🏁", wrong: "Wanting to be better is already a green flag — awareness is the first step 💚" }
+  }
+];
+
+// ========== STATE ==========
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+// ========== LOADING ==========
+const tips = [
+  "Loading your vibe check...",
+  "Analyzing green flag energy...",
+  "Preparing 20 juicy questions...",
+  "Calibrating your emotional IQ...",
+  "Almost ready to spill the tea 🍵"
+];
+
+window.onload = () => {
+  let pct = 0;
+  const fill = document.getElementById('loader-fill');
+  const pctEl = document.getElementById('loader-pct');
+  const tipEl = document.getElementById('loading-tip');
+  let tipIdx = 0;
+
+  const interval = setInterval(() => {
+    pct += Math.random() * 4 + 1;
+    if (pct > 100) pct = 100;
+    fill.style.width = pct + '%';
+    pctEl.textContent = Math.floor(pct) + '%';
+
+    if (pct % 20 < 5 && tipIdx < tips.length - 1) {
+      tipIdx++;
+      tipEl.style.opacity = 0;
+      setTimeout(() => { tipEl.textContent = tips[tipIdx]; tipEl.style.opacity = 1; }, 300);
+    }
+
+    if (pct >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        document.getElementById('loading-screen').classList.remove('active');
+        setTimeout(() => document.getElementById('welcome-screen').classList.add('active'), 100);
+      }, 600);
+    }
+  }, 60);
+};
+
+// ========== CONFETTI ==========
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colors = ['#74c69d', '#52b788', '#2d6a4f', '#b7e4c7', '#d8f3dc', '#fff', '#95d5b2'];
+  const particles = Array.from({ length: 120 }, () => ({
+    x: Math.random() * canvas.width,
+    y: -20,
+    r: Math.random() * 7 + 3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    vx: (Math.random() - 0.5) * 4,
+    vy: Math.random() * 4 + 2,
+    rot: Math.random() * 360,
+    rotv: (Math.random() - 0.5) * 8,
+    shape: Math.random() > 0.5 ? 'rect' : 'circle'
+  }));
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0, 1 - frame / 120);
+      if (p.shape === 'rect') ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+      else { ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.rotv;
+      p.vy += 0.1;
+    });
+    frame++;
+    if (frame < 150) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
+}
+
+// ========== QUIZ ==========
+function startQuiz() {
+  document.getElementById('welcome-screen').classList.remove('active');
+  launchConfetti();
+  setTimeout(() => {
+    document.getElementById('quiz-screen').classList.add('active');
+    loadQuestion();
+  }, 500);
+}
+
+function loadQuestion() {
+  answered = false;
+  const q = questions[currentQ];
+  const card = document.getElementById('question-card');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = 'cardIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards';
+
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('q-counter').textContent = `Q ${currentQ + 1} / 20`;
+  document.getElementById('score-badge').textContent = `Score: ${score}`;
+  document.getElementById('progress-fill').style.width = ((currentQ + 1) / 20 * 100) + '%';
+
+  const fb = document.getElementById('feedback-msg');
+  fb.className = 'feedback-msg';
+  fb.textContent = '';
+
+  const btn = document.getElementById('btn-next');
+  btn.className = 'btn-next';
+  btn.textContent = currentQ === 19 ? 'See My Results 🏁' : 'Next Question →';
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-inner"><span class="option-letter">${letters[i]}</span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx, btn) {
+  if (answered) return;
+  answered = true;
+  const q = questions[currentQ];
+  const allBtns = document.querySelectorAll('.option-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  const fb = document.getElementById('feedback-msg');
+
+  if (idx === q.correct) {
+    score++;
+    btn.classList.add('correct');
+    fb.textContent = '✅ ' + q.feedback.correct;
+    fb.className = 'feedback-msg correct-fb show';
+  } else {
+    btn.classList.add('wrong');
+    allBtns[q.correct].classList.add('correct');
+    fb.textContent = '💡 ' + q.feedback.wrong;
+    fb.className = 'feedback-msg wrong-fb show';
+  }
+
+  document.getElementById('score-badge').textContent = `Score: ${score}`;
+  document.getElementById('btn-next').classList.add('show');
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= 20) {
+    showResults();
+  } else {
+    document.getElementById('quiz-screen').scrollTop = 0;
+    loadQuestion();
+  }
+}
+
+// ========== RESULTS ==========
+function showResults() {
+  document.getElementById('quiz-screen').classList.remove('active');
+  launchConfetti();
+
+  const pct = score / 20;
+  let emoji, title, verdict, desc;
+
+  if (pct >= 0.9) {
+    emoji = '🟢'; title = 'Total Green Flag!';
+    verdict = 'You are the green flag people dream of';
+    desc = 'You communicate with clarity, love without conditions, and show up for people genuinely. The world needs more people like you. Don\'t change a thing — just keep being this version of yourself.';
+  } else if (pct >= 0.75) {
+    emoji = '💚'; title = 'Mostly Green Flag!';
+    verdict = 'You\'re doing great, with a little room to grow';
+    desc = 'You have an amazing emotional foundation. You\'re empathetic, honest, and kind. A few edges could be softer, but honestly? You\'re someone most people would feel lucky to have in their corner.';
+  } else if (pct >= 0.55) {
+    emoji = '🌿'; title = 'Greenish Flag';
+    verdict = 'Good intentions, growing awareness';
+    desc = 'You genuinely care about people and want to do the right thing. Your heart is in the right place — you just need to work on a few blind spots. The fact that you\'re here already shows your desire to grow.';
+  } else if (pct >= 0.35) {
+    emoji = '🟡'; title = 'Yellow Flag Territory';
+    verdict = 'Work in progress — and that\'s okay';
+    desc = 'You have qualities worth celebrating but also some patterns that might push people away. The good news? Awareness is half the battle. Start with one thing you want to improve and go from there.';
+  } else {
+    emoji = '🔴'; title = 'Red Flag Alert!';
+    verdict = 'Time for some real self-reflection';
+    desc = 'We all have red flag tendencies at times — that\'s human. What matters is what you do with this information. Consider journaling about your patterns, talking to someone you trust, or even a therapist. You deserve to grow.';
+  }
+
+  setTimeout(() => {
+    document.getElementById('result-screen').classList.add('active');
+    document.getElementById('result-emoji').textContent = emoji;
+    document.getElementById('result-title').textContent = title;
+    document.getElementById('result-subtitle').textContent = `You got ${score} out of 20 right`;
+    document.getElementById('result-verdict').textContent = verdict;
+    document.getElementById('result-desc').textContent = desc;
+    document.getElementById('score-display').innerHTML = `${score}<small>/ 20</small>`;
+
+    const deg = Math.round((score / 20) * 360);
+    document.getElementById('score-ring').style.setProperty('--pct', deg + 'deg');
+  }, 400);
+}
+
+function retryQuiz() {
+  currentQ = 0;
+  score = 0;
+  document.getElementById('result-screen').classList.remove('active');
+  document.getElementById('quiz-screen').classList.add('active');
+  loadQuestion();
+}
+</script>
+</body>
+</html>
